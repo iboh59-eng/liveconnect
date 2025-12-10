@@ -1,516 +1,376 @@
-/**
- * LiveConnect - Production-Ready Random Video Chat Server
- * 
- * Features:
- * - WebRTC Signaling (offer/answer/ICE candidates)
- * - Random user matching with queue system
- * - Real-time chat with typing indicators
- * - Rate limiting & security headers
- * - CORS configuration
- * - Compression for performance
- */
-
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
-const { v4: uuidv4 } = require('uuid');
 const path = require('path');
-const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const rateLimit = require('express-rate-limit');
-
-// ============================================
-// APP CONFIGURATION
-// ============================================
 
 const app = express();
-const httpServer = createServer(app);
-
-const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS 
-    ? process.env.ALLOWED_ORIGINS.split(',') 
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'];
-
-// Trust proxy for platforms like Heroku, Railway
-app.set('trust proxy', 1);
-
-// ============================================
-// MIDDLEWARE
-// ============================================
-
-// Compression
-app.use(compression());
-
-// Security headers (configured for WebRTC)
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            connectSrc: ["'self'", "wss:", "ws:", "https:"],
-            mediaSrc: ["'self'", "blob:"],
-            imgSrc: ["'self'", "data:", "blob:"],
-        },
-    },
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-}));
-
-// CORS
-app.use(cors({
-    origin: NODE_ENV === 'production' ? ALLOWED_ORIGINS : '*',
-    credentials: true
-}));
-
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests, please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use('/api/', limiter);
-
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public'), {
-    maxAge: NODE_ENV === 'production' ? '1d' : 0
-}));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
-        uptime: process.uptime(),
-        users: users.size,
-        queue: waitingQueue.length
-    });
+const server = createServer(app);
+const io = new Server(server, {
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
-// API endpoint for stats
-app.get('/api/stats', (req, res) => {
-    res.json({
-        online: users.size,
-        countries: new Set([...users.values()].map(u => u.country.code)).size,
-        inCall: [...users.values()].filter(u => u.inCall).length / 2
-    });
-});
+app.use(express.static('public'));
 
 // ============================================
-// SOCKET.IO SETUP
-// ============================================
-
-const io = new Server(httpServer, {
-    cors: {
-        origin: NODE_ENV === 'production' ? ALLOWED_ORIGINS : '*',
-        methods: ["GET", "POST"],
-        credentials: true
-    },
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    transports: ['websocket', 'polling']
-});
-
-// ============================================
-// USER & ROOM MANAGEMENT
+// DATA STRUCTURES
 // ============================================
 
 const users = new Map();
 let waitingQueue = [];
-const rooms = new Map();
-const reports = new Map(); // Track reports for moderation
+const reports = new Map();
+const likes = new Map(); // oderId -> [userIds who liked]
 
-// Country data
 const countries = [
-    { code: '🇩🇪', name: 'Deutschland' },
-    { code: '🇺🇸', name: 'USA' },
-    { code: '🇬🇧', name: 'UK' },
-    { code: '🇫🇷', name: 'Frankreich' },
-    { code: '🇪🇸', name: 'Spanien' },
-    { code: '🇮🇹', name: 'Italien' },
-    { code: '🇯🇵', name: 'Japan' },
-    { code: '🇰🇷', name: 'Südkorea' },
-    { code: '🇧🇷', name: 'Brasilien' },
-    { code: '🇳🇱', name: 'Niederlande' },
-    { code: '🇸🇪', name: 'Schweden' },
-    { code: '🇵🇱', name: 'Polen' },
-    { code: '🇦🇹', name: 'Österreich' },
-    { code: '🇨🇭', name: 'Schweiz' },
-    { code: '🇨🇦', name: 'Kanada' },
-    { code: '🇦🇺', name: 'Australien' },
-    { code: '🇲🇽', name: 'Mexiko' },
-    { code: '🇮🇳', name: 'Indien' },
-    { code: '🇹🇷', name: 'Türkei' },
-    { code: '🇷🇺', name: 'Russland' },
-    { code: '🇵🇹', name: 'Portugal' },
-    { code: '🇧🇪', name: 'Belgien' },
-    { code: '🇳🇴', name: 'Norwegen' },
-    { code: '🇩🇰', name: 'Dänemark' },
-    { code: '🇫🇮', name: 'Finnland' }
+  { code: '🇩🇪', name: 'Deutschland', region: 'europe' },
+  { code: '🇺🇸', name: 'USA', region: 'americas' },
+  { code: '🇬🇧', name: 'UK', region: 'europe' },
+  { code: '🇫🇷', name: 'Frankreich', region: 'europe' },
+  { code: '🇪🇸', name: 'Spanien', region: 'europe' },
+  { code: '🇮🇹', name: 'Italien', region: 'europe' },
+  { code: '🇯🇵', name: 'Japan', region: 'asia' },
+  { code: '🇰🇷', name: 'Südkorea', region: 'asia' },
+  { code: '🇧🇷', name: 'Brasilien', region: 'americas' },
+  { code: '🇳🇱', name: 'Niederlande', region: 'europe' },
+  { code: '🇵🇱', name: 'Polen', region: 'europe' },
+  { code: '🇹🇷', name: 'Türkei', region: 'europe' },
+  { code: '🇷🇺', name: 'Russland', region: 'europe' },
+  { code: '🇮🇳', name: 'Indien', region: 'asia' },
+  { code: '🇲🇽', name: 'Mexiko', region: 'americas' },
+  { code: '🇦🇺', name: 'Australien', region: 'oceania' },
+  { code: '🇨🇦', name: 'Kanada', region: 'americas' },
+  { code: '🇦🇷', name: 'Argentinien', region: 'americas' },
+  { code: '🇸🇦', name: 'Saudi-Arabien', region: 'asia' },
+  { code: '🇪🇬', name: 'Ägypten', region: 'africa' }
 ];
 
-// Username generators
-const adjectives = ['Happy', 'Cool', 'Smart', 'Funny', 'Nice', 'Chill', 'Wild', 'Sweet', 'Brave', 'Lucky', 
-                    'Swift', 'Clever', 'Bright', 'Calm', 'Bold', 'Free', 'Kind', 'Quick', 'Warm', 'Wise'];
-const nouns = ['Panda', 'Tiger', 'Eagle', 'Wolf', 'Fox', 'Bear', 'Lion', 'Hawk', 'Shark', 'Dragon',
-               'Phoenix', 'Dolphin', 'Falcon', 'Panther', 'Raven', 'Cobra', 'Jaguar', 'Owl', 'Lynx', 'Viper'];
+const adjectives = ['Happy', 'Cool', 'Smart', 'Funny', 'Nice', 'Chill', 'Wild', 'Sweet', 'Brave', 'Lucky', 'Swift', 'Clever', 'Bright', 'Kind', 'Free'];
+const nouns = ['Panda', 'Tiger', 'Eagle', 'Wolf', 'Fox', 'Bear', 'Lion', 'Hawk', 'Shark', 'Dragon', 'Phoenix', 'Dolphin', 'Panther', 'Owl', 'Cobra'];
 
-function generateUsername() {
-    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const noun = nouns[Math.floor(Math.random() * nouns.length)];
-    const num = Math.floor(Math.random() * 1000);
-    return `${adj}${noun}${num}`;
+const giftEmojis = ['❤️', '💎', '🌹', '🎁', '⭐', '🔥', '💫', '🦋', '🌸', '💝'];
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+function randomName() {
+  return adjectives[Math.floor(Math.random() * adjectives.length)] + 
+         nouns[Math.floor(Math.random() * nouns.length)] + 
+         Math.floor(Math.random() * 100);
 }
 
-function getRandomCountry() {
-    return countries[Math.floor(Math.random() * countries.length)];
+function randomCountry() {
+  return countries[Math.floor(Math.random() * countries.length)];
 }
 
-function broadcastOnlineCount() {
-    const count = users.size;
-    const countrySet = new Set([...users.values()].map(u => u.country.code));
-    io.emit('online-count', {
-        count: count,
-        countries: countrySet.size
-    });
+function broadcastStats() {
+  const online = users.size;
+  const inCall = [...users.values()].filter(u => u.inCall).length;
+  const searching = waitingQueue.length;
+  
+  io.emit('stats', { 
+    online, 
+    inCall: Math.floor(inCall / 2),
+    searching,
+    countries: new Set([...users.values()].map(u => u.country.code)).size
+  });
 }
 
-function findMatch(socketId) {
-    const user = users.get(socketId);
-    if (!user) return null;
+function findMatch(socketId, filter = {}) {
+  const user = users.get(socketId);
+  if (!user) return null;
 
-    // Find first available user in queue
-    for (let i = 0; i < waitingQueue.length; i++) {
-        const matchId = waitingQueue[i];
-        if (matchId !== socketId && users.has(matchId)) {
-            const matchUser = users.get(matchId);
-            if (!matchUser.inCall && matchUser.searching) {
-                waitingQueue.splice(i, 1);
-                return matchId;
-            }
-        }
+  for (let i = 0; i < waitingQueue.length; i++) {
+    const matchId = waitingQueue[i];
+    if (matchId === socketId) continue;
+    
+    const match = users.get(matchId);
+    if (!match || match.inCall || !match.searching) continue;
+    
+    // Apply filters
+    if (filter.region && match.country.region !== filter.region) continue;
+    if (filter.gender && match.gender !== filter.gender) continue;
+    
+    waitingQueue.splice(i, 1);
+    return matchId;
+  }
+  return null;
+}
+
+function createMatch(id1, id2) {
+  const u1 = users.get(id1);
+  const u2 = users.get(id2);
+  
+  if (!u1 || !u2) return;
+  
+  u1.inCall = true;
+  u1.partnerId = id2;
+  u1.searching = false;
+  u1.callStartTime = Date.now();
+  
+  u2.inCall = true;
+  u2.partnerId = id1;
+  u2.searching = false;
+  u2.callStartTime = Date.now();
+  
+  console.log(`Match: ${u1.name} <-> ${u2.name}`);
+}
+
+function endCall(socketId) {
+  const user = users.get(socketId);
+  if (!user) return;
+  
+  const partnerId = user.partnerId;
+  
+  user.inCall = false;
+  user.partnerId = null;
+  user.callStartTime = null;
+  
+  if (partnerId) {
+    const partner = users.get(partnerId);
+    if (partner) {
+      partner.inCall = false;
+      partner.partnerId = null;
+      partner.callStartTime = null;
     }
-    return null;
-}
-
-function createRoom(user1Id, user2Id) {
-    const roomId = uuidv4();
-    
-    rooms.set(roomId, {
-        id: roomId,
-        user1: user1Id,
-        user2: user2Id,
-        createdAt: Date.now()
-    });
-    
-    const user1 = users.get(user1Id);
-    const user2 = users.get(user2Id);
-    
-    if (user1 && user2) {
-        user1.inCall = true;
-        user1.partnerId = user2Id;
-        user1.roomId = roomId;
-        user1.searching = false;
-        
-        user2.inCall = true;
-        user2.partnerId = user1Id;
-        user2.roomId = roomId;
-        user2.searching = false;
-    }
-    
-    return roomId;
-}
-
-function endRoom(roomId) {
-    const room = rooms.get(roomId);
-    if (!room) return;
-    
-    const user1 = users.get(room.user1);
-    const user2 = users.get(room.user2);
-    
-    if (user1) {
-        user1.inCall = false;
-        user1.partnerId = null;
-        user1.roomId = null;
-    }
-    
-    if (user2) {
-        user2.inCall = false;
-        user2.partnerId = null;
-        user2.roomId = null;
-    }
-    
-    rooms.delete(roomId);
-}
-
-function cleanupUser(socketId) {
-    const user = users.get(socketId);
-    if (user) {
-        if (user.partnerId) {
-            io.to(user.partnerId).emit('partner-left');
-        }
-        if (user.roomId) {
-            endRoom(user.roomId);
-        }
-        waitingQueue = waitingQueue.filter(id => id !== socketId);
-    }
-    users.delete(socketId);
+  }
+  
+  return partnerId;
 }
 
 // ============================================
-// SOCKET.IO EVENT HANDLERS
+// SOCKET.IO
 // ============================================
 
 io.on('connection', (socket) => {
-    console.log(`[${new Date().toISOString()}] User connected: ${socket.id}`);
+  console.log('Connected:', socket.id);
+  
+  // Initialize user
+  const user = {
+    id: socket.id,
+    name: randomName(),
+    country: randomCountry(),
+    gender: null,
+    inCall: false,
+    partnerId: null,
+    searching: false,
+    callStartTime: null,
+    filter: {},
+    likes: 0,
+    gifts: []
+  };
+  users.set(socket.id, user);
+  
+  socket.emit('user-info', user);
+  broadcastStats();
+  
+  // Set user preferences
+  socket.on('set-preferences', (data) => {
+    const u = users.get(socket.id);
+    if (u) {
+      if (data.gender) u.gender = data.gender;
+      if (data.filter) u.filter = data.filter;
+      if (data.name) u.name = String(data.name).slice(0, 20);
+    }
+  });
+  
+  // Find match with filters
+  socket.on('find-match', (filter = {}) => {
+    const u = users.get(socket.id);
+    if (!u || u.searching || u.inCall) return;
     
-    // Initialize user
-    const country = getRandomCountry();
-    users.set(socket.id, {
-        id: socket.id,
-        name: generateUsername(),
-        country: country,
-        inCall: false,
-        partnerId: null,
-        roomId: null,
-        searching: false,
-        connectedAt: Date.now()
-    });
+    u.searching = true;
+    u.filter = filter || {};
     
-    socket.emit('user-info', users.get(socket.id));
-    broadcastOnlineCount();
+    const matchId = findMatch(socket.id, filter);
     
-    // ----------------------------------------
-    // MATCHING
-    // ----------------------------------------
-    
-    socket.on('find-match', () => {
-        const user = users.get(socket.id);
-        if (!user || user.searching || user.inCall) return;
-        
-        console.log(`[${new Date().toISOString()}] User ${socket.id} searching for match`);
-        user.searching = true;
-        
-        const matchId = findMatch(socket.id);
-        
-        if (matchId) {
-            const matchUser = users.get(matchId);
-            const roomId = createRoom(socket.id, matchId);
-            
-            console.log(`[${new Date().toISOString()}] Match: ${socket.id} <-> ${matchId}`);
-            
-            socket.emit('match-found', {
-                partnerId: matchId,
-                partnerName: matchUser.name,
-                partnerCountry: matchUser.country,
-                roomId: roomId,
-                isInitiator: true
-            });
-            
-            io.to(matchId).emit('match-found', {
-                partnerId: socket.id,
-                partnerName: user.name,
-                partnerCountry: user.country,
-                roomId: roomId,
-                isInitiator: false
-            });
-        } else {
-            if (!waitingQueue.includes(socket.id)) {
-                waitingQueue.push(socket.id);
-            }
-            socket.emit('searching');
-            console.log(`[${new Date().toISOString()}] User ${socket.id} added to queue (size: ${waitingQueue.length})`);
-        }
-    });
-    
-    socket.on('cancel-search', () => {
-        const user = users.get(socket.id);
-        if (user) {
-            user.searching = false;
-            waitingQueue = waitingQueue.filter(id => id !== socket.id);
-        }
-    });
-    
-    socket.on('next-partner', () => {
-        const user = users.get(socket.id);
-        if (!user) return;
-        
-        if (user.roomId) {
-            const partnerId = user.partnerId;
-            endRoom(user.roomId);
-            if (partnerId) {
-                io.to(partnerId).emit('partner-left');
-            }
-        }
-        
-        waitingQueue = waitingQueue.filter(id => id !== socket.id);
-        user.searching = false;
-        user.inCall = false;
-        user.partnerId = null;
-        user.roomId = null;
-        
-        socket.emit('start-new-search');
-    });
-    
-    socket.on('end-call', () => {
-        const user = users.get(socket.id);
-        if (!user || !user.roomId) return;
-        
-        const partnerId = user.partnerId;
-        endRoom(user.roomId);
-        
-        if (partnerId) {
-            io.to(partnerId).emit('partner-left');
-        }
-        
-        socket.emit('call-ended');
-    });
-    
-    // ----------------------------------------
-    // WEBRTC SIGNALING
-    // ----------------------------------------
-    
-    socket.on('webrtc-offer', (data) => {
-        const user = users.get(socket.id);
-        if (!user || !user.partnerId) return;
-        
-        io.to(user.partnerId).emit('webrtc-offer', {
-            offer: data.offer,
-            from: socket.id
+    if (matchId) {
+      const match = users.get(matchId);
+      createMatch(socket.id, matchId);
+      
+      socket.emit('match-found', {
+        oderId: matchId,
+        partnerName: match.name,
+        partnerCountry: match.country,
+        partnerGender: match.gender,
+        isInitiator: true
+      });
+      
+      io.to(matchId).emit('match-found', {
+        partnerId: socket.id,
+        partnerName: u.name,
+        partnerCountry: u.country,
+        partnerGender: u.gender,
+        isInitiator: false
+      });
+      
+      broadcastStats();
+    } else {
+      if (!waitingQueue.includes(socket.id)) {
+        waitingQueue.push(socket.id);
+      }
+      socket.emit('searching', { position: waitingQueue.indexOf(socket.id) + 1 });
+    }
+  });
+  
+  // Cancel search
+  socket.on('cancel-search', () => {
+    const u = users.get(socket.id);
+    if (u) {
+      u.searching = false;
+      waitingQueue = waitingQueue.filter(id => id !== socket.id);
+    }
+  });
+  
+  // Next partner
+  socket.on('next-partner', () => {
+    const partnerId = endCall(socket.id);
+    if (partnerId) {
+      io.to(partnerId).emit('partner-left', { reason: 'skipped' });
+    }
+    waitingQueue = waitingQueue.filter(id => id !== socket.id);
+    socket.emit('ready-for-next');
+    broadcastStats();
+  });
+  
+  // End call
+  socket.on('end-call', () => {
+    const partnerId = endCall(socket.id);
+    if (partnerId) {
+      io.to(partnerId).emit('partner-left', { reason: 'ended' });
+    }
+    socket.emit('call-ended');
+    broadcastStats();
+  });
+  
+  // WebRTC Signaling
+  socket.on('webrtc-offer', (data) => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      io.to(u.partnerId).emit('webrtc-offer', { offer: data.offer });
+    }
+  });
+  
+  socket.on('webrtc-answer', (data) => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      io.to(u.partnerId).emit('webrtc-answer', { answer: data.answer });
+    }
+  });
+  
+  socket.on('ice-candidate', (data) => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      io.to(u.partnerId).emit('ice-candidate', { candidate: data.candidate });
+    }
+  });
+  
+  // Chat
+  socket.on('chat-message', (data) => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      const msg = String(data.message).slice(0, 500).trim();
+      if (msg) {
+        io.to(u.partnerId).emit('chat-message', {
+          message: msg,
+          from: u.name,
+          timestamp: Date.now()
         });
-    });
+      }
+    }
+  });
+  
+  socket.on('typing', () => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      io.to(u.partnerId).emit('partner-typing');
+    }
+  });
+  
+  // Like partner
+  socket.on('like-partner', () => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      const partner = users.get(u.partnerId);
+      if (partner) {
+        partner.likes++;
+        io.to(u.partnerId).emit('received-like', { from: u.name });
+        socket.emit('like-sent');
+      }
+    }
+  });
+  
+  // Send gift
+  socket.on('send-gift', (data) => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      const gift = giftEmojis.includes(data.gift) ? data.gift : '❤️';
+      io.to(u.partnerId).emit('received-gift', { 
+        gift, 
+        from: u.name 
+      });
+      socket.emit('gift-sent', { gift });
+    }
+  });
+  
+  // Report
+  socket.on('report-user', (data) => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      reports.set(Date.now(), {
+        reporter: socket.id,
+        reported: u.partnerId,
+        reason: data.reason || 'other',
+        timestamp: Date.now()
+      });
+      socket.emit('report-received');
+    }
+  });
+  
+  // Add friend
+  socket.on('add-friend', () => {
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      io.to(u.partnerId).emit('friend-request', { from: u.name, fromId: socket.id });
+    }
+  });
+  
+  socket.on('accept-friend', (data) => {
+    if (data.fromId) {
+      io.to(data.fromId).emit('friend-accepted', { by: users.get(socket.id)?.name });
+    }
+  });
+  
+  // Disconnect
+  socket.on('disconnect', () => {
+    console.log('Disconnected:', socket.id);
     
-    socket.on('webrtc-answer', (data) => {
-        const user = users.get(socket.id);
-        if (!user || !user.partnerId) return;
-        
-        io.to(user.partnerId).emit('webrtc-answer', {
-            answer: data.answer,
-            from: socket.id
-        });
-    });
-    
-    socket.on('ice-candidate', (data) => {
-        const user = users.get(socket.id);
-        if (!user || !user.partnerId) return;
-        
-        io.to(user.partnerId).emit('ice-candidate', {
-            candidate: data.candidate,
-            from: socket.id
-        });
-    });
-    
-    // ----------------------------------------
-    // CHAT
-    // ----------------------------------------
-    
-    socket.on('chat-message', (data) => {
-        const user = users.get(socket.id);
-        if (!user || !user.partnerId) return;
-        
-        // Basic message sanitization
-        const message = String(data.message).slice(0, 1000).trim();
-        if (!message) return;
-        
-        io.to(user.partnerId).emit('chat-message', {
-            message: message,
-            from: user.name,
-            timestamp: Date.now()
-        });
-    });
-    
-    socket.on('typing', () => {
-        const user = users.get(socket.id);
-        if (!user || !user.partnerId) return;
-        
-        io.to(user.partnerId).emit('partner-typing');
-    });
-    
-    // ----------------------------------------
-    // REPORTING
-    // ----------------------------------------
-    
-    socket.on('report-user', (data) => {
-        const user = users.get(socket.id);
-        if (!user || !user.partnerId) return;
-        
-        const reportId = uuidv4();
-        reports.set(reportId, {
-            id: reportId,
-            reporter: socket.id,
-            reported: user.partnerId,
-            reason: data.reason || 'unspecified',
-            timestamp: Date.now()
-        });
-        
-        console.log(`[${new Date().toISOString()}] Report: ${socket.id} reported ${user.partnerId}`);
-        socket.emit('report-received');
-    });
-    
-    // ----------------------------------------
-    // DISCONNECT
-    // ----------------------------------------
-    
-    socket.on('disconnect', (reason) => {
-        console.log(`[${new Date().toISOString()}] User disconnected: ${socket.id} (${reason})`);
-        cleanupUser(socket.id);
-        broadcastOnlineCount();
-    });
-});
-
-// ============================================
-// CLEANUP INTERVAL
-// ============================================
-
-// Clean up stale users every 5 minutes
-setInterval(() => {
-    const now = Date.now();
-    const staleThreshold = 10 * 60 * 1000; // 10 minutes
-    
-    for (const [socketId, user] of users) {
-        if (now - user.connectedAt > staleThreshold && !user.inCall) {
-            const socket = io.sockets.sockets.get(socketId);
-            if (!socket || !socket.connected) {
-                cleanupUser(socketId);
-            }
-        }
+    const u = users.get(socket.id);
+    if (u?.partnerId) {
+      const partner = users.get(u.partnerId);
+      if (partner) {
+        partner.inCall = false;
+        partner.partnerId = null;
+        io.to(u.partnerId).emit('partner-left', { reason: 'disconnected' });
+      }
     }
     
-    // Clean waiting queue
-    waitingQueue = waitingQueue.filter(id => users.has(id));
-    
-    console.log(`[${new Date().toISOString()}] Cleanup: ${users.size} users, ${waitingQueue.length} in queue`);
-}, 5 * 60 * 1000);
-
-// ============================================
-// START SERVER
-// ============================================
-
-httpServer.listen(PORT, () => {
-    console.log(`
-╔══════════════════════════════════════════════════════════╗
-║                                                          ║
-║   🎥 LiveConnect Server - Production Ready               ║
-║                                                          ║
-║   Environment: ${NODE_ENV.padEnd(40)}║
-║   Port: ${String(PORT).padEnd(47)}║
-║   URL: http://localhost:${PORT}                          ║
-║                                                          ║
-║   Ready for video chat connections!                      ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-    `);
+    waitingQueue = waitingQueue.filter(id => id !== socket.id);
+    users.delete(socket.id);
+    broadcastStats();
+  });
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down...');
-    httpServer.close(() => {
-        console.log('Server closed');
-        process.exit(0);
-    });
+// Stats broadcast every 5 seconds
+setInterval(broadcastStats, 5000);
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', users: users.size });
+});
+
+// Start
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`🎥 LiveConnect running on port ${PORT}`);
 });
