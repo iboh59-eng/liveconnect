@@ -1,39 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#e94560"/>
-      <stop offset="100%" style="stop-color:#c73e54"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#16c79a"/>
-      <stop offset="100%" style="stop-color:#00d9a0"/>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff2d55"/>
+      <stop offset="100%" style="stop-color:#ff6b35"/>
     </linearGradient>
   </defs>
   
   <!-- Background -->
-  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="102" fill="url(#grad)"/>
   
-  <!-- TV Shape -->
-  <rect x="96" y="140" width="320" height="220" rx="20" fill="#1a1a2e" stroke="white" stroke-width="8"/>
+  <!-- Camera Icon -->
+  <g fill="white">
+    <!-- Camera body -->
+    <rect x="96" y="160" width="240" height="192" rx="24"/>
+    
+    <!-- Lens circle -->
+    <circle cx="216" cy="256" r="56" fill="url(#grad)"/>
+    <circle cx="216" cy="256" r="40" fill="white"/>
+    <circle cx="216" cy="256" r="24" fill="url(#grad)"/>
+    
+    <!-- Recording indicator -->
+    <circle cx="296" cy="192" r="16" fill="#ff2d55"/>
+    
+    <!-- Play triangle (video indicator) -->
+    <polygon points="376,208 376,304 432,256" fill="white"/>
+  </g>
   
-  <!-- Screen -->
-  <rect x="116" y="160" width="280" height="180" rx="10" fill="#16213e"/>
-  
-  <!-- Play button on screen -->
-  <circle cx="256" cy="250" r="45" fill="url(#accent)" opacity="0.9"/>
-  <polygon points="244,230 244,270 276,250" fill="white"/>
-  
-  <!-- TV Stand -->
-  <rect x="200" y="370" width="112" height="16" rx="8" fill="white"/>
-  <rect x="180" y="386" width="152" height="12" rx="6" fill="white" opacity="0.7"/>
-  
-  <!-- Signal waves -->
-  <path d="M400 100 Q420 120 400 140" stroke="white" stroke-width="6" fill="none" opacity="0.8"/>
-  <path d="M420 85 Q450 115 420 155" stroke="white" stroke-width="6" fill="none" opacity="0.6"/>
-  <path d="M440 70 Q480 115 440 170" stroke="white" stroke-width="6" fill="none" opacity="0.4"/>
-  
-  <!-- Dot indicator -->
-  <circle cx="370" cy="175" r="10" fill="#16c79a">
-    <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
-  </circle>
+  <!-- Connection dots -->
+  <circle cx="416" cy="416" r="24" fill="white" opacity="0.9"/>
+  <circle cx="368" cy="432" r="16" fill="white" opacity="0.7"/>
+  <circle cx="432" cy="368" r="12" fill="white" opacity="0.5"/>
 </svg>
