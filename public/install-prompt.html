@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrownTV Installieren</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .install-container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo-large {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #e94560, #ff6b81);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #a0a0b0;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feature-icon {
+            font-size: 24px;
+        }
+        
+        .feature-text {
+            font-size: 12px;
+            color: #a0a0b0;
+        }
+        
+        .install-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #e94560, #c73e54);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        
+        .install-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .skip-link {
+            color: #a0a0b0;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .instructions {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #ff6b81;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+            color: #a0a0b0;
+            line-height: 1.8;
+        }
+        
+        @media (max-width: 480px) {
+            .install-container {
+                padding: 30px 20px;
+            }
+            
+            .logo-large {
+                font-size: 60px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="install-container">
+        <div class="logo-large">📺</div>
+        <h1>BrownTV Installieren</h1>
+        <p class="subtitle">Installiere die App für beste Erfahrung: schneller Start, Push-Benachrichtigungen und Offline-Funktionen</p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🚀</div>
+                <span class="feature-text">Schneller Start</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <span class="feature-text">App-ähnlich</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔔</div>
+                <span class="feature-text">Benachrichtigungen</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💾</div>
+                <span class="feature-text">Offline nutzbar</span>
+            </div>
+        </div>
+        
+        <button class="install-btn" id="installButton">
+            📲 Jetzt installieren
+        </button>
+        
+        <a href="/" class="skip-link">Im Browser öffnen</a>
+        
+        <div class="instructions">
+            <h3>Installationsanleitung:</h3>
+            <ol>
+                <li>Klicke oben auf "Jetzt installieren"</li>
+                <li>Wähle "Zum Startbildschirm hinzufügen"</li>
+                <li>Bestätige die Installation</li>
+                <li>BrownTV erscheint wie eine native App</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installButton').style.display = 'flex';
+    });
+    
+    document.getElementById('installButton').addEventListener('click', async () => {
+        if (!deferredPrompt) {
+            // Show manual instructions
+            alert('Zum Installieren: Menü → "Zum Startbildschirm hinzufügen" wählen');
+            return;
+        }
+        
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            // Redirect to app
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        }
+        
+        deferredPrompt = null;
+    });
+    
+    // Check if already installed
+    window.addEventListener('appinstalled', () => {
+        window.location.href = '/';
+    });
+    </script>
+</body>
+</html>

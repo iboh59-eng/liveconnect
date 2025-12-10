@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: browntv
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: REDIS_URL
+        fromDatabase:
+          name: browntv-redis
+          property: connectionString
+    healthCheckPath: /health
+    autoDeploy: true
+
+databases:
+  - name: browntv-redis
+    databaseName: browntv
+    plan: free
