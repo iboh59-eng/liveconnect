@@ -3,19 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="LiveConnect">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LiveConnect">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0a0a0f">
-    <meta name="description" content="LiveConnect - Random Video Chat">
-    <link rel="manifest" href="data:application/json,{'name':'LiveConnect','short_name':'LiveConnect','start_url':'/','display':'standalone','background_color':'%230a0a0f','theme_color':'%23ff2d55'}">
-    <title>LiveConnect</title>
+    <meta name="msapplication-TileColor" content="#ff2d55">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="format-detection" content="telephone=no">
     
+    <!-- SEO -->
+    <meta name="description" content="LiveConnect - Triff neue Leute aus aller Welt per Video-Chat. Kostenlos & sicher.">
+    <meta name="keywords" content="video chat, random chat, omegle alternative, video call, meet people">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="LiveConnect - Video Chat">
+    <meta property="og:description" content="Triff neue Leute aus aller Welt per Video-Chat">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/icons/icon-512.png">
+    
+    <title>LiveConnect - Video Chat</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192.png">
+    
+    <!-- Splash Screens for iOS -->
+    <link rel="apple-touch-startup-image" href="/splash/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px)">
+    <link rel="apple-touch-startup-image" href="/splash/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px)">
+    <link rel="apple-touch-startup-image" href="/splash/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px)">
+    <link rel="apple-touch-startup-image" href="/splash/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px)">
+    <link rel="apple-touch-startup-image" href="/splash/splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px)">
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        *, *::before, *::after { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        input, textarea {
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
         
         :root {
             --primary: #ff2d55;
@@ -32,16 +81,20 @@
             --warning: #ff9f0a;
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
         }
         
         html, body {
-            font-family: 'Outfit', -apple-system, sans-serif;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
             color: var(--text);
             height: 100%;
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
             touch-action: manipulation;
+            position: fixed;
+            width: 100%;
         }
         
         /* App Container */
@@ -52,6 +105,8 @@
             height: 100dvh;
             padding-top: var(--safe-top);
             padding-bottom: var(--safe-bottom);
+            padding-left: var(--safe-left);
+            padding-right: var(--safe-right);
         }
         
         /* Header */
@@ -59,137 +114,94 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 12px;
+            padding: 10px 16px;
             background: rgba(10,10,15,0.95);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
-            z-index: 10;
+            z-index: 100;
+            flex-shrink: 0;
         }
         
         .logo {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--primary);
+            gap: 8px;
         }
         
         .logo-icon {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, var(--primary), #ff6b35);
-            border-radius: 8px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 16px;
         }
         
-        .stats {
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header-stats {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 11px;
+            gap: 6px;
+            font-size: 12px;
             color: var(--text2);
         }
         
-        .stat {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .stat-dot {
-            width: 6px;
-            height: 6px;
+        .online-dot {
+            width: 8px;
+            height: 8px;
             background: var(--secondary);
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
         
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
         }
         
-        .stat b {
-            color: var(--text);
-            font-weight: 600;
-        }
-        
-        .menu-btn {
-            width: 32px;
-            height: 32px;
+        .header-btn {
+            width: 36px;
+            height: 36px;
             background: var(--elevated);
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             color: var(--text);
-            font-size: 16px;
-            cursor: pointer;
-        }
-        
-        /* Main Content */
-        .main {
-            flex: 1;
+            font-size: 18px;
             display: flex;
-            flex-direction: column;
-            min-height: 0;
-            position: relative;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
         
         /* Video Area */
         .video-area {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding: 8px;
-            min-height: 0;
-        }
-        
-        @media (min-width: 700px) {
-            .video-area {
-                flex-direction: row;
-            }
-        }
-        
-        .video-box {
-            flex: 1;
             position: relative;
-            background: var(--card);
-            border-radius: 16px;
+            background: #000;
             overflow: hidden;
             min-height: 0;
         }
         
-        .video-box video {
+        .remote-video-wrap {
+            position: absolute;
+            inset: 0;
+        }
+        
+        .remote-video-wrap video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-        }
-        
-        .video-box.local video {
-            transform: scaleX(-1);
-        }
-        
-        .video-box.connected {
-            box-shadow: 0 0 0 2px var(--secondary), 0 0 30px rgba(0,245,212,0.2);
-        }
-        
-        .video-label {
-            position: absolute;
-            bottom: 8px;
-            left: 8px;
-            padding: 4px 10px;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
         
         .video-placeholder {
@@ -199,90 +211,112 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            background: linear-gradient(180deg, var(--card), var(--elevated));
+            gap: 16px;
+            background: linear-gradient(180deg, var(--card), var(--bg));
         }
         
         .placeholder-icon {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             background: var(--elevated);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 32px;
             border: 2px solid var(--border);
         }
         
         .placeholder-text {
-            font-size: 13px;
+            font-size: 16px;
             color: var(--text2);
             text-align: center;
-            padding: 0 20px;
         }
         
-        /* Mini local video (mobile overlay) */
-        .mini-local {
+        /* Local Video PIP */
+        .local-pip {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 100px;
-            height: 140px;
+            top: 16px;
+            right: 16px;
+            width: 110px;
+            height: 150px;
             background: var(--card);
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            border: 2px solid var(--border);
-            z-index: 5;
-            display: none;
-            cursor: move;
-            touch-action: none;
+            border: 3px solid var(--border);
+            z-index: 50;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            transition: border-color 0.3s;
         }
         
-        .mini-local.active {
-            display: block;
+        .local-pip.connected {
+            border-color: var(--secondary);
         }
         
-        .mini-local video {
+        .local-pip video {
             width: 100%;
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1);
         }
         
-        /* Video Controls Overlay */
-        .video-controls {
+        .local-pip .flip-btn {
             position: absolute;
-            top: 8px;
-            left: 8px;
-            display: flex;
-            gap: 6px;
-            z-index: 5;
-        }
-        
-        .video-ctrl-btn {
-            width: 36px;
-            height: 36px;
+            bottom: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(10px);
             border: none;
-            border-radius: 10px;
+            border-radius: 50%;
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
-            transition: transform 0.15s;
         }
         
-        .video-ctrl-btn:active {
-            transform: scale(0.9);
+        /* Partner Info */
+        .partner-info {
+            position: absolute;
+            bottom: 200px;
+            left: 16px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            z-index: 40;
         }
         
-        .video-ctrl-btn.active {
-            background: var(--primary);
+        .partner-info.active {
+            display: flex;
+        }
+        
+        .partner-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--elevated);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .partner-details h3 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .partner-details p {
+            font-size: 12px;
+            color: var(--text2);
         }
         
         /* Searching Overlay */
-        .searching {
+        .searching-overlay {
             position: absolute;
             inset: 0;
             background: rgba(10,10,15,0.95);
@@ -290,17 +324,17 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 16px;
-            z-index: 20;
+            gap: 24px;
+            z-index: 60;
         }
         
-        .searching.active {
+        .searching-overlay.active {
             display: flex;
         }
         
-        .spinner {
-            width: 70px;
-            height: 70px;
+        .search-spinner {
+            width: 80px;
+            height: 80px;
             border: 3px solid var(--border);
             border-top-color: var(--primary);
             border-radius: 50%;
@@ -312,240 +346,180 @@
         }
         
         .searching-text {
-            font-size: 15px;
-            color: var(--text2);
+            font-size: 18px;
+            font-weight: 500;
         }
         
-        .cancel-btn {
-            padding: 8px 20px;
+        .cancel-search {
+            padding: 12px 32px;
             background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            color: var(--text2);
-            font-size: 13px;
-            cursor: pointer;
-        }
-        
-        /* Controls Bar */
-        .controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 12px;
-            background: var(--card);
-            border-top: 1px solid var(--border);
-        }
-        
-        .ctrl-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: var(--elevated);
+            border: 2px solid var(--border);
+            border-radius: 30px;
             color: var(--text);
-            font-size: 20px;
+            font-size: 15px;
             cursor: pointer;
-            transition: all 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
-        .ctrl-btn:active {
-            transform: scale(0.9);
-        }
-        
-        .ctrl-btn:disabled {
-            opacity: 0.4;
+        /* Chat Overlay */
+        .chat-overlay {
+            position: absolute;
+            bottom: 180px;
+            left: 0;
+            right: 0;
+            max-height: 250px;
+            padding: 0 16px;
             pointer-events: none;
+            z-index: 30;
         }
         
-        .ctrl-btn.muted {
-            background: rgba(255,69,58,0.2);
-            color: var(--danger);
-        }
-        
-        .ctrl-btn.primary {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--primary), #ff6b35);
-            font-size: 24px;
-            box-shadow: 0 4px 20px var(--primary-glow);
-        }
-        
-        .ctrl-btn.danger {
-            background: var(--danger);
-        }
-        
-        .ctrl-btn.success {
-            background: var(--success);
-        }
-        
-        .ctrl-btn.like {
-            background: var(--elevated);
-        }
-        
-        .ctrl-btn.like.liked {
-            background: #ff2d55;
-            animation: heartBeat 0.3s;
-        }
-        
-        @keyframes heartBeat {
-            50% { transform: scale(1.3); }
-        }
-        
-        /* Action Buttons (Gifts, Like, etc) */
-        .action-bar {
+        .chat-messages {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
             gap: 8px;
-            padding: 8px 12px;
-            display: none;
+            overflow: hidden;
+            mask-image: linear-gradient(transparent 0%, black 30%);
+            -webkit-mask-image: linear-gradient(transparent 0%, black 30%);
         }
         
-        .action-bar.active {
+        .chat-msg {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            animation: msgSlide 0.3s ease-out;
+            pointer-events: auto;
+            word-wrap: break-word;
+        }
+        
+        @keyframes msgSlide {
+            from { opacity: 0; transform: translateY(20px); }
+        }
+        
+        .chat-msg.sent {
+            align-self: flex-end;
+            background: var(--primary);
+            border-bottom-right-radius: 6px;
+        }
+        
+        .chat-msg.received {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border-bottom-left-radius: 6px;
+        }
+        
+        .chat-msg.system {
+            align-self: center;
+            background: rgba(0,0,0,0.5);
+            font-size: 12px;
+            color: var(--text2);
+        }
+        
+        /* Action Row */
+        .action-row {
+            position: absolute;
+            bottom: 130px;
+            left: 0;
+            right: 0;
+            display: none;
+            justify-content: center;
+            gap: 12px;
+            padding: 0 16px;
+            z-index: 35;
+        }
+        
+        .action-row.active {
             display: flex;
         }
         
         .action-btn {
-            padding: 6px 14px;
-            background: var(--elevated);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            color: var(--text);
-            font-size: 13px;
-            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            padding: 10px 18px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
         }
         
         .action-btn:active {
             transform: scale(0.95);
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .action-btn.liked {
+            background: var(--primary);
+            border-color: var(--primary);
         }
         
         /* Gift Picker */
         .gift-picker {
             position: absolute;
-            bottom: 140px;
+            bottom: 190px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 12px;
             display: none;
             gap: 8px;
-            z-index: 30;
+            padding: 12px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            z-index: 70;
         }
         
         .gift-picker.active {
             display: flex;
         }
         
-        .gift-btn {
-            width: 44px;
-            height: 44px;
+        .gift-item {
+            width: 50px;
+            height: 50px;
             background: var(--elevated);
             border: none;
-            border-radius: 12px;
-            font-size: 22px;
+            border-radius: 14px;
+            font-size: 26px;
             cursor: pointer;
             transition: transform 0.15s;
         }
         
-        .gift-btn:active {
-            transform: scale(1.2);
+        .gift-item:active {
+            transform: scale(1.1);
         }
         
-        /* Received Gift Animation */
-        .gift-animation {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 80px;
-            z-index: 100;
-            animation: giftPop 1s ease-out forwards;
-            pointer-events: none;
-        }
-        
-        @keyframes giftPop {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
-            100% { transform: translate(-50%, -100%) scale(1); opacity: 0; }
-        }
-        
-        /* Chat */
-        .chat-container {
+        /* Bottom Controls */
+        .bottom-controls {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            max-height: 50%;
+            padding: 16px;
+            padding-bottom: calc(16px + var(--safe-bottom));
+            background: linear-gradient(transparent, rgba(0,0,0,0.8) 30%);
+            z-index: 40;
+        }
+        
+        .chat-input-row {
             display: flex;
-            flex-direction: column;
-            pointer-events: none;
-            z-index: 15;
-        }
-        
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            mask-image: linear-gradient(transparent, black 20%);
-            -webkit-mask-image: linear-gradient(transparent, black 20%);
-        }
-        
-        .chat-msg {
-            max-width: 80%;
-            padding: 8px 12px;
-            border-radius: 16px;
-            font-size: 13px;
-            animation: msgIn 0.2s ease-out;
-            pointer-events: auto;
-        }
-        
-        @keyframes msgIn {
-            from { opacity: 0; transform: translateY(10px); }
-        }
-        
-        .chat-msg.sent {
-            align-self: flex-end;
-            background: var(--primary);
-            border-bottom-right-radius: 4px;
-        }
-        
-        .chat-msg.received {
-            align-self: flex-start;
-            background: var(--elevated);
-            border-bottom-left-radius: 4px;
-        }
-        
-        .chat-msg.system {
-            align-self: center;
-            background: rgba(0,0,0,0.5);
-            font-size: 11px;
-            color: var(--text2);
-        }
-        
-        .chat-input-area {
-            padding: 8px;
-            pointer-events: auto;
+            gap: 10px;
+            margin-bottom: 16px;
         }
         
         .chat-input-wrap {
+            flex: 1;
             display: flex;
+            align-items: center;
             gap: 8px;
-            padding: 6px;
-            background: var(--card);
-            border-radius: 24px;
-            border: 1px solid var(--border);
+            padding: 6px 6px 6px 16px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
         }
         
         .chat-input {
@@ -554,17 +528,17 @@
             border: none;
             outline: none;
             color: var(--text);
-            font-size: 14px;
-            padding: 0 10px;
+            font-size: 15px;
+            font-family: inherit;
         }
         
         .chat-input::placeholder {
-            color: var(--text2);
+            color: rgba(255,255,255,0.5);
         }
         
         .chat-send {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             background: var(--primary);
             border: none;
             border-radius: 50%;
@@ -574,31 +548,60 @@
         }
         
         .chat-send:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
         }
         
-        /* Quick Replies */
-        .quick-replies {
+        .control-row {
             display: flex;
-            gap: 6px;
-            padding: 0 8px 8px;
-            overflow-x: auto;
-            pointer-events: auto;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
         }
         
-        .quick-replies::-webkit-scrollbar {
-            display: none;
-        }
-        
-        .quick-reply {
-            padding: 6px 12px;
-            background: var(--elevated);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            color: var(--text);
-            font-size: 12px;
-            white-space: nowrap;
+        .ctrl-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 22px;
             cursor: pointer;
+            transition: transform 0.15s;
+        }
+        
+        .ctrl-btn:active {
+            transform: scale(0.9);
+        }
+        
+        .ctrl-btn:disabled {
+            opacity: 0.4;
+        }
+        
+        .ctrl-btn.muted {
+            background: rgba(255,69,58,0.3);
+        }
+        
+        .ctrl-btn.main {
+            width: 70px;
+            height: 70px;
+            font-size: 28px;
+        }
+        
+        .ctrl-btn.start {
+            background: var(--success);
+            box-shadow: 0 4px 20px rgba(48,209,88,0.4);
+        }
+        
+        .ctrl-btn.next {
+            background: linear-gradient(135deg, var(--primary), #ff6b35);
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+        
+        .ctrl-btn.end {
+            background: var(--danger);
+            box-shadow: 0 4px 20px rgba(255,69,58,0.4);
         }
         
         /* Start Screen */
@@ -610,8 +613,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 100;
-            padding: 20px;
+            z-index: 1000;
+            padding: 32px;
+            padding-top: calc(32px + var(--safe-top));
+            padding-bottom: calc(32px + var(--safe-bottom));
         }
         
         .start-screen.hidden {
@@ -619,16 +624,16 @@
         }
         
         .start-logo {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             background: linear-gradient(135deg, var(--primary), #ff6b35);
-            border-radius: 24px;
+            border-radius: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 50px var(--primary-glow);
+            font-size: 48px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 60px var(--primary-glow);
             animation: float 3s ease-in-out infinite;
         }
         
@@ -637,50 +642,172 @@
         }
         
         .start-title {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 800;
             background: linear-gradient(135deg, var(--primary), #ff6b35);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         
         .start-subtitle {
-            font-size: 14px;
+            font-size: 16px;
             color: var(--text2);
             text-align: center;
-            margin-bottom: 30px;
-            max-width: 280px;
+            margin-bottom: 40px;
+            line-height: 1.5;
         }
         
         .start-btn {
-            padding: 14px 40px;
+            width: 100%;
+            max-width: 300px;
+            padding: 18px;
             background: linear-gradient(135deg, var(--primary), #ff6b35);
             border: none;
             border-radius: 30px;
             color: white;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 10px 30px var(--primary-glow);
+            box-shadow: 0 10px 40px var(--primary-glow);
         }
         
         .start-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.98);
         }
         
-        /* Settings */
-        .settings-panel {
+        .start-features {
+            display: flex;
+            gap: 32px;
+            margin-top: 48px;
+        }
+        
+        .feature {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--elevated);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .feature span {
+            font-size: 12px;
+            color: var(--text2);
+        }
+        
+        /* Match Overlay */
+        .match-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+        }
+        
+        .match-overlay.active {
+            display: flex;
+        }
+        
+        .match-content {
+            text-align: center;
+            animation: matchBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes matchBounce {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+        
+        .match-emoji {
+            font-size: 72px;
+            margin-bottom: 16px;
+        }
+        
+        .match-text {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--secondary), #00bbf9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .match-name {
+            font-size: 18px;
+            color: var(--text2);
+            margin-top: 8px;
+        }
+        
+        /* Gift Animation */
+        .gift-fly {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            z-index: 600;
+            pointer-events: none;
+            animation: giftFly 1.2s ease-out forwards;
+        }
+        
+        @keyframes giftFly {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+            100% { transform: translate(-50%, -150%) scale(0.5); opacity: 0; }
+        }
+        
+        /* Toast */
+        .toast-area {
+            position: fixed;
+            top: calc(60px + var(--safe-top));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 800;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .toast {
+            padding: 12px 24px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            font-size: 14px;
+            white-space: nowrap;
+            animation: toastPop 0.3s ease-out;
+        }
+        
+        @keyframes toastPop {
+            from { opacity: 0; transform: scale(0.8) translateY(-20px); }
+        }
+        
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--danger); }
+        
+        /* Settings Modal */
+        .settings-modal {
             position: fixed;
             inset: 0;
             background: var(--bg);
-            z-index: 90;
+            z-index: 900;
             display: none;
             flex-direction: column;
             padding-top: var(--safe-top);
         }
         
-        .settings-panel.active {
+        .settings-modal.active {
             display: flex;
         }
         
@@ -688,12 +815,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 16px;
             border-bottom: 1px solid var(--border);
         }
         
         .settings-header h2 {
-            font-size: 18px;
+            font-size: 20px;
         }
         
         .settings-close {
@@ -707,226 +834,196 @@
             cursor: pointer;
         }
         
-        .settings-content {
+        .settings-body {
             flex: 1;
             overflow-y: auto;
-            padding: 16px;
+            padding: 20px;
         }
         
         .setting-group {
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
         
         .setting-label {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text2);
-            margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-bottom: 12px;
         }
         
         .setting-options {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
         }
         
-        .setting-option {
-            padding: 10px 16px;
+        .setting-opt {
+            padding: 12px 20px;
             background: var(--elevated);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
             color: var(--text);
-            font-size: 14px;
+            font-size: 15px;
             cursor: pointer;
         }
         
-        .setting-option.selected {
+        .setting-opt.selected {
             background: var(--primary);
             border-color: var(--primary);
         }
         
         .settings-save {
-            margin: 16px;
-            padding: 14px;
+            margin: 20px;
+            padding: 16px;
             background: var(--primary);
             border: none;
-            border-radius: 14px;
+            border-radius: 16px;
             color: white;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 600;
             cursor: pointer;
         }
         
-        /* Match Animation */
-        .match-overlay {
+        /* PWA Install Banner */
+        .install-banner {
             position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.9);
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            padding-bottom: calc(16px + var(--safe-bottom));
+            background: var(--card);
+            border-top: 1px solid var(--border);
             display: none;
             align-items: center;
-            justify-content: center;
-            z-index: 80;
+            gap: 12px;
+            z-index: 950;
+            animation: slideUp 0.3s ease-out;
         }
         
-        .match-overlay.active {
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+        }
+        
+        .install-banner.show {
             display: flex;
         }
         
-        .match-content {
-            text-align: center;
-            animation: matchPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        
-        @keyframes matchPop {
-            0% { transform: scale(0); }
-            100% { transform: scale(1); }
-        }
-        
-        .match-emoji {
-            font-size: 60px;
-            margin-bottom: 12px;
-            animation: bounce 0.6s infinite;
-        }
-        
-        @keyframes bounce {
-            50% { transform: scale(1.1); }
-        }
-        
-        .match-text {
-            font-size: 22px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--secondary), #00bbf9);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .match-info {
-            font-size: 15px;
-            color: var(--text2);
-            margin-top: 8px;
-        }
-        
-        /* Toast */
-        .toast-container {
-            position: fixed;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .toast {
-            padding: 10px 20px;
-            background: var(--card);
-            border: 1px solid var(--border);
+        .install-banner-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), #ff6b35);
             border-radius: 12px;
-            font-size: 13px;
-            animation: toastIn 0.3s;
-            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
         }
         
-        @keyframes toastIn {
-            from { opacity: 0; transform: translateY(-20px); }
+        .install-banner-text {
+            flex: 1;
         }
         
-        .toast.success { border-color: var(--success); }
-        .toast.error { border-color: var(--danger); }
+        .install-banner-text h4 {
+            font-size: 15px;
+            font-weight: 600;
+        }
         
-        /* Swipe Hint */
-        .swipe-hint {
-            position: absolute;
-            bottom: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 8px 16px;
-            background: rgba(0,0,0,0.7);
-            border-radius: 20px;
+        .install-banner-text p {
             font-size: 12px;
             color: var(--text2);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
         }
         
-        .swipe-hint.show {
-            opacity: 1;
+        .install-banner-btn {
+            padding: 10px 20px;
+            background: var(--primary);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
         }
         
-        /* Desktop adjustments */
-        @media (min-width: 700px) {
-            .mini-local { display: none !important; }
-            .video-box.local { display: flex !important; }
-            
-            .chat-container {
-                position: absolute;
-                top: 0;
-                left: auto;
-                right: 0;
-                bottom: 0;
-                width: 300px;
-                max-height: none;
-                background: var(--card);
-                border-left: 1px solid var(--border);
-                pointer-events: auto;
-            }
-            
-            .chat-messages {
-                mask-image: none;
-                -webkit-mask-image: none;
-            }
-            
-            .video-area {
-                margin-right: 300px;
-            }
+        .install-banner-close {
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: none;
+            color: var(--text2);
+            font-size: 18px;
+            cursor: pointer;
         }
         
-        /* Landscape mobile */
+        /* Landscape adjustments */
         @media (max-height: 500px) and (orientation: landscape) {
-            .header { padding: 4px 12px; }
-            .controls { padding: 8px; }
-            .ctrl-btn { width: 42px; height: 42px; font-size: 18px; }
-            .ctrl-btn.primary { width: 50px; height: 50px; }
+            .header { padding: 6px 16px; }
+            .bottom-controls { padding: 8px 16px; }
+            .ctrl-btn { width: 46px; height: 46px; font-size: 18px; }
+            .ctrl-btn.main { width: 56px; height: 56px; }
+            .local-pip { width: 90px; height: 120px; }
+        }
+        
+        /* Desktop */
+        @media (min-width: 768px) {
+            .local-pip {
+                width: 180px;
+                height: 240px;
+                border-radius: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Toast Container -->
-    <div class="toast-container" id="toasts"></div>
+    <!-- Toast Area -->
+    <div class="toast-area" id="toasts"></div>
     
     <!-- Start Screen -->
     <div class="start-screen" id="startScreen">
         <div class="start-logo">🎥</div>
         <h1 class="start-title">LiveConnect</h1>
-        <p class="start-subtitle">Video-Chat mit echten Menschen weltweit. Kostenlos und sicher.</p>
-        <button class="start-btn" id="startBtn">Jetzt starten</button>
+        <p class="start-subtitle">Triff neue Leute aus aller Welt per Video-Chat. Kostenlos & sicher.</p>
+        <button class="start-btn" id="startBtn">Los geht's</button>
+        <div class="start-features">
+            <div class="feature">
+                <div class="feature-icon">🔐</div>
+                <span>Sicher</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🌍</div>
+                <span>Weltweit</span>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <span>Sofort</span>
+            </div>
+        </div>
     </div>
     
-    <!-- Settings Panel -->
-    <div class="settings-panel" id="settingsPanel">
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settingsModal">
         <div class="settings-header">
             <h2>⚙️ Einstellungen</h2>
             <button class="settings-close" id="settingsClose">✕</button>
         </div>
-        <div class="settings-content">
+        <div class="settings-body">
             <div class="setting-group">
-                <div class="setting-label">Dein Geschlecht</div>
-                <div class="setting-options">
-                    <button class="setting-option" data-gender="male">👨 Männlich</button>
-                    <button class="setting-option" data-gender="female">👩 Weiblich</button>
-                    <button class="setting-option selected" data-gender="">🙂 Egal</button>
+                <div class="setting-label">Ich bin</div>
+                <div class="setting-options" id="genderOptions">
+                    <button class="setting-opt" data-val="male">👨 Mann</button>
+                    <button class="setting-opt" data-val="female">👩 Frau</button>
+                    <button class="setting-opt selected" data-val="">🙂 Egal</button>
                 </div>
             </div>
             <div class="setting-group">
-                <div class="setting-label">Partner suchen</div>
-                <div class="setting-options">
-                    <button class="setting-option filter-option selected" data-filter="">🌍 Alle</button>
-                    <button class="setting-option filter-option" data-filter="europe">🇪🇺 Europa</button>
-                    <button class="setting-option filter-option" data-filter="americas">🌎 Amerika</button>
-                    <button class="setting-option filter-option" data-filter="asia">🌏 Asien</button>
+                <div class="setting-label">Partner aus</div>
+                <div class="setting-options" id="regionOptions">
+                    <button class="setting-opt selected" data-val="">🌍 Überall</button>
+                    <button class="setting-opt" data-val="europe">🇪🇺 Europa</button>
+                    <button class="setting-opt" data-val="americas">🌎 Amerika</button>
+                    <button class="setting-opt" data-val="asia">🌏 Asien</button>
                 </div>
             </div>
         </div>
@@ -937,19 +1034,29 @@
     <div class="match-overlay" id="matchOverlay">
         <div class="match-content">
             <div class="match-emoji">🎉</div>
-            <div class="match-text">Partner gefunden!</div>
-            <div class="match-info" id="matchInfo"></div>
+            <div class="match-text">Verbunden!</div>
+            <div class="match-name" id="matchName"></div>
         </div>
     </div>
     
     <!-- Gift Picker -->
     <div class="gift-picker" id="giftPicker">
-        <button class="gift-btn" data-gift="❤️">❤️</button>
-        <button class="gift-btn" data-gift="💎">💎</button>
-        <button class="gift-btn" data-gift="🌹">🌹</button>
-        <button class="gift-btn" data-gift="🎁">🎁</button>
-        <button class="gift-btn" data-gift="⭐">⭐</button>
-        <button class="gift-btn" data-gift="🔥">🔥</button>
+        <button class="gift-item" data-gift="❤️">❤️</button>
+        <button class="gift-item" data-gift="💎">💎</button>
+        <button class="gift-item" data-gift="🌹">🌹</button>
+        <button class="gift-item" data-gift="⭐">⭐</button>
+        <button class="gift-item" data-gift="🔥">🔥</button>
+    </div>
+    
+    <!-- Install Banner -->
+    <div class="install-banner" id="installBanner">
+        <div class="install-banner-icon">🎥</div>
+        <div class="install-banner-text">
+            <h4>App installieren</h4>
+            <p>Für das beste Erlebnis</p>
+        </div>
+        <button class="install-banner-btn" id="installBtn">Installieren</button>
+        <button class="install-banner-close" id="installClose">✕</button>
     </div>
     
     <!-- Main App -->
@@ -957,106 +1064,138 @@
         <header class="header">
             <div class="logo">
                 <div class="logo-icon">🎥</div>
-                <span>LiveConnect</span>
+                <span class="logo-text">LiveConnect</span>
             </div>
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-dot"></div>
-                    <span><b id="onlineCount">0</b> online</span>
-                </div>
+            <div class="header-stats">
+                <div class="online-dot"></div>
+                <span id="onlineCount">0</span> online
             </div>
-            <button class="menu-btn" id="menuBtn">⚙️</button>
+            <button class="header-btn" id="settingsBtn">⚙️</button>
         </header>
         
-        <main class="main">
-            <div class="video-area">
-                <!-- Local Video (Desktop) -->
-                <div class="video-box local" id="localBox">
-                    <video id="localVideo" autoplay muted playsinline></video>
-                    <div class="video-placeholder" id="localPlaceholder">
-                        <div class="placeholder-icon">👤</div>
-                        <div class="placeholder-text">Kamera aktivieren...</div>
-                    </div>
-                    <div class="video-label">
-                        <span id="localFlag">🌍</span>
-                        <span id="localName">Du</span>
-                    </div>
-                    <div class="video-controls">
-                        <button class="video-ctrl-btn" id="flipCamBtn">🔄</button>
-                    </div>
-                </div>
-                
-                <!-- Remote Video -->
-                <div class="video-box" id="remoteBox">
-                    <video id="remoteVideo" autoplay playsinline></video>
-                    <div class="video-placeholder" id="remotePlaceholder">
-                        <div class="placeholder-icon">🔍</div>
-                        <div class="placeholder-text">Tippe Start um jemanden zu finden</div>
-                    </div>
-                    <div class="video-label" id="remoteLabel" style="display:none">
-                        <span id="remoteFlag">🌍</span>
-                        <span id="remoteName">Partner</span>
-                    </div>
-                    
-                    <!-- Mini Local Video (Mobile) -->
-                    <div class="mini-local" id="miniLocal">
-                        <video id="miniLocalVideo" autoplay muted playsinline></video>
-                    </div>
-                    
-                    <!-- Searching Overlay -->
-                    <div class="searching" id="searching">
-                        <div class="spinner"></div>
-                        <div class="searching-text">Suche Partner...</div>
-                        <button class="cancel-btn" id="cancelBtn">Abbrechen</button>
-                    </div>
-                    
-                    <!-- Chat Overlay -->
-                    <div class="chat-container" id="chatContainer">
-                        <div class="chat-messages" id="chatMessages"></div>
-                        <div class="quick-replies" id="quickReplies">
-                            <button class="quick-reply" data-msg="Hi! 👋">Hi! 👋</button>
-                            <button class="quick-reply" data-msg="Woher kommst du?">Woher?</button>
-                            <button class="quick-reply" data-msg="😊">😊</button>
-                            <button class="quick-reply" data-msg="👍">👍</button>
-                            <button class="quick-reply" data-msg="Wie geht's?">Wie geht's?</button>
-                        </div>
-                        <div class="chat-input-area">
-                            <div class="chat-input-wrap">
-                                <input type="text" class="chat-input" id="chatInput" placeholder="Nachricht..." maxlength="500" disabled>
-                                <button class="chat-send" id="chatSend" disabled>➤</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="swipe-hint" id="swipeHint">👆 Swipe für nächsten Partner</div>
+        <div class="video-area">
+            <div class="remote-video-wrap">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <div class="video-placeholder" id="remotePlaceholder">
+                    <div class="placeholder-icon">🔍</div>
+                    <div class="placeholder-text">Tippe Start um<br>jemanden zu finden</div>
                 </div>
             </div>
             
-            <!-- Action Bar -->
-            <div class="action-bar" id="actionBar">
+            <div class="local-pip" id="localPip">
+                <video id="localVideo" autoplay muted playsinline></video>
+                <button class="flip-btn" id="flipBtn">🔄</button>
+            </div>
+            
+            <div class="partner-info" id="partnerInfo">
+                <div class="partner-avatar" id="partnerFlag">🌍</div>
+                <div class="partner-details">
+                    <h3 id="partnerName">Partner</h3>
+                    <p id="partnerCountry">Land</p>
+                </div>
+            </div>
+            
+            <div class="searching-overlay" id="searchingOverlay">
+                <div class="search-spinner"></div>
+                <div class="searching-text">Suche Partner...</div>
+                <button class="cancel-search" id="cancelSearch">Abbrechen</button>
+            </div>
+            
+            <div class="chat-overlay">
+                <div class="chat-messages" id="chatMessages"></div>
+            </div>
+            
+            <div class="action-row" id="actionRow">
                 <button class="action-btn" id="likeBtn">❤️ Like</button>
-                <button class="action-btn" id="giftBtn">🎁 Geschenk</button>
-                <button class="action-btn" id="addFriendBtn">👥 Freund</button>
+                <button class="action-btn" id="giftBtn">🎁 Gift</button>
+                <button class="action-btn" id="friendBtn">👥 Add</button>
             </div>
             
-            <!-- Controls -->
-            <div class="controls">
-                <button class="ctrl-btn" id="micBtn" disabled>🎤</button>
-                <button class="ctrl-btn" id="camBtn" disabled>📹</button>
-                <button class="ctrl-btn primary success" id="startCallBtn">▶️</button>
-                <button class="ctrl-btn primary" id="nextBtn" style="display:none">⏭️</button>
-                <button class="ctrl-btn danger" id="endBtn" style="display:none">✕</button>
-                <button class="ctrl-btn" id="reportBtn" disabled>🚩</button>
+            <div class="bottom-controls">
+                <div class="chat-input-row">
+                    <div class="chat-input-wrap">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Nachricht..." maxlength="500" disabled>
+                        <button class="chat-send" id="chatSend" disabled>➤</button>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <button class="ctrl-btn" id="micBtn" disabled>🎤</button>
+                    <button class="ctrl-btn" id="camBtn" disabled>📹</button>
+                    <button class="ctrl-btn main start" id="startCall">▶️</button>
+                    <button class="ctrl-btn main next" id="nextCall" style="display:none">⏭️</button>
+                    <button class="ctrl-btn end" id="endCall" style="display:none">✕</button>
+                    <button class="ctrl-btn" id="reportBtn" disabled>🚩</button>
+                </div>
             </div>
-        </main>
+        </div>
     </div>
-    
+
+    <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
+    
     <script>
-        // ============================================
-        // CONFIG & STATE
-        // ============================================
+        // =============================================
+        // SERVICE WORKER REGISTRATION
+        // =============================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const reg = await navigator.serviceWorker.register('/sw.js');
+                    console.log('SW registered:', reg.scope);
+                } catch (e) {
+                    console.log('SW registration failed:', e);
+                }
+            });
+        }
         
+        // =============================================
+        // PWA INSTALL PROMPT
+        // =============================================
+        let deferredPrompt = null;
+        const installBanner = document.getElementById('installBanner');
+        const installBtn = document.getElementById('installBtn');
+        const installClose = document.getElementById('installClose');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install banner after 5 seconds if not already installed
+            setTimeout(() => {
+                if (deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+                    installBanner.classList.add('show');
+                }
+            }, 5000);
+        });
+        
+        installBtn?.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('App installed');
+            }
+            
+            deferredPrompt = null;
+            installBanner.classList.remove('show');
+        });
+        
+        installClose?.addEventListener('click', () => {
+            installBanner.classList.remove('show');
+        });
+        
+        // Detect if running as installed PWA
+        window.addEventListener('appinstalled', () => {
+            console.log('App was installed');
+            installBanner.classList.remove('show');
+            deferredPrompt = null;
+        });
+        
+        // =============================================
+        // CONFIG
+        // =============================================
         const ICE_SERVERS = [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
@@ -1064,9 +1203,12 @@
             { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
         ];
         
+        // =============================================
+        // STATE
+        // =============================================
         const state = {
             socket: null,
-            localStream: null,
+            stream: null,
             pc: null,
             connected: false,
             inCall: false,
@@ -1075,66 +1217,57 @@
             camOn: true,
             user: null,
             partner: null,
-            facingMode: 'user',
+            facing: 'user',
             filter: {},
-            gender: null,
+            gender: '',
             liked: false
         };
         
-        // ============================================
-        // DOM ELEMENTS
-        // ============================================
-        
+        // =============================================
+        // ELEMENTS
+        // =============================================
         const $ = id => document.getElementById(id);
         const el = {
             startScreen: $('startScreen'),
             startBtn: $('startBtn'),
-            settingsPanel: $('settingsPanel'),
+            settingsModal: $('settingsModal'),
+            settingsBtn: $('settingsBtn'),
             settingsClose: $('settingsClose'),
             settingsSave: $('settingsSave'),
-            menuBtn: $('menuBtn'),
             matchOverlay: $('matchOverlay'),
-            matchInfo: $('matchInfo'),
+            matchName: $('matchName'),
             giftPicker: $('giftPicker'),
             localVideo: $('localVideo'),
             remoteVideo: $('remoteVideo'),
-            miniLocalVideo: $('miniLocalVideo'),
-            localPlaceholder: $('localPlaceholder'),
+            localPip: $('localPip'),
             remotePlaceholder: $('remotePlaceholder'),
-            localBox: $('localBox'),
-            remoteBox: $('remoteBox'),
-            miniLocal: $('miniLocal'),
-            localFlag: $('localFlag'),
-            localName: $('localName'),
-            remoteLabel: $('remoteLabel'),
-            remoteFlag: $('remoteFlag'),
-            remoteName: $('remoteName'),
-            searching: $('searching'),
-            cancelBtn: $('cancelBtn'),
+            partnerInfo: $('partnerInfo'),
+            partnerFlag: $('partnerFlag'),
+            partnerName: $('partnerName'),
+            partnerCountry: $('partnerCountry'),
+            searchingOverlay: $('searchingOverlay'),
+            cancelSearch: $('cancelSearch'),
             chatMessages: $('chatMessages'),
             chatInput: $('chatInput'),
             chatSend: $('chatSend'),
-            quickReplies: $('quickReplies'),
-            actionBar: $('actionBar'),
+            actionRow: $('actionRow'),
             likeBtn: $('likeBtn'),
             giftBtn: $('giftBtn'),
-            addFriendBtn: $('addFriendBtn'),
+            friendBtn: $('friendBtn'),
             micBtn: $('micBtn'),
             camBtn: $('camBtn'),
-            startCallBtn: $('startCallBtn'),
-            nextBtn: $('nextBtn'),
-            endBtn: $('endBtn'),
+            startCall: $('startCall'),
+            nextCall: $('nextCall'),
+            endCall: $('endCall'),
             reportBtn: $('reportBtn'),
-            flipCamBtn: $('flipCamBtn'),
+            flipBtn: $('flipBtn'),
             onlineCount: $('onlineCount'),
-            toasts: $('toasts'),
-            swipeHint: $('swipeHint')
+            toasts: $('toasts')
         };
         
-        // ============================================
-        // UTILITIES
-        // ============================================
-        
+        // =============================================
+        // UTILS
+        // =============================================
         function toast(msg, type = '') {
             const t = document.createElement('div');
             t.className = `toast ${type}`;
@@ -1143,12 +1276,16 @@
             setTimeout(() => t.remove(), 3000);
         }
         
-        function showGiftAnimation(gift) {
+        function showGift(emoji) {
             const g = document.createElement('div');
-            g.className = 'gift-animation';
-            g.textContent = gift;
+            g.className = 'gift-fly';
+            g.textContent = emoji;
             document.body.appendChild(g);
-            setTimeout(() => g.remove(), 1000);
+            setTimeout(() => g.remove(), 1200);
+        }
+        
+        function vibrate(ms = 50) {
+            if (navigator.vibrate) navigator.vibrate(ms);
         }
         
         function addMsg(text, type) {
@@ -1157,11 +1294,12 @@
             m.textContent = text;
             el.chatMessages.appendChild(m);
             el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+            while (el.chatMessages.children.length > 20) {
+                el.chatMessages.removeChild(el.chatMessages.firstChild);
+            }
         }
         
-        function clearChat() {
-            el.chatMessages.innerHTML = '';
-        }
+        function clearChat() { el.chatMessages.innerHTML = ''; }
         
         function enableChat(on) {
             el.chatInput.disabled = !on;
@@ -1169,110 +1307,73 @@
         }
         
         function updateUI(inCall) {
-            el.startCallBtn.style.display = inCall ? 'none' : 'flex';
-            el.nextBtn.style.display = inCall ? 'flex' : 'none';
-            el.endBtn.style.display = inCall ? 'flex' : 'none';
+            el.startCall.style.display = inCall ? 'none' : 'flex';
+            el.nextCall.style.display = inCall ? 'flex' : 'none';
+            el.endCall.style.display = inCall ? 'flex' : 'none';
             el.reportBtn.disabled = !inCall;
-            el.actionBar.classList.toggle('active', inCall);
-            el.miniLocal.classList.toggle('active', inCall && window.innerWidth < 700);
-            
-            if (inCall) {
-                el.localBox.style.display = window.innerWidth < 700 ? 'none' : '';
-            } else {
-                el.localBox.style.display = '';
-            }
+            el.actionRow.classList.toggle('active', inCall);
+            el.localPip.classList.toggle('connected', inCall);
         }
         
-        // ============================================
+        // =============================================
         // MEDIA
-        // ============================================
-        
+        // =============================================
         async function getMedia() {
             try {
-                state.localStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: state.facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+                state.stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: state.facing, width: { ideal: 1280 }, height: { ideal: 720 } },
                     audio: { echoCancellation: true, noiseSuppression: true }
                 });
-                
-                el.localVideo.srcObject = state.localStream;
-                el.miniLocalVideo.srcObject = state.localStream;
-                el.localPlaceholder.style.display = 'none';
+                el.localVideo.srcObject = state.stream;
                 el.micBtn.disabled = false;
                 el.camBtn.disabled = false;
-                
                 return true;
             } catch (e) {
                 console.error('Media error:', e);
                 toast('Kamera-Zugriff fehlgeschlagen', 'error');
-                el.localPlaceholder.querySelector('.placeholder-text').textContent = 'Kamera blockiert';
                 return false;
             }
         }
         
         async function flipCamera() {
-            if (!state.localStream) return;
-            
-            state.facingMode = state.facingMode === 'user' ? 'environment' : 'user';
-            
-            state.localStream.getTracks().forEach(t => t.stop());
-            
+            if (!state.stream) return;
+            state.facing = state.facing === 'user' ? 'environment' : 'user';
+            state.stream.getTracks().forEach(t => t.stop());
             try {
-                state.localStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: state.facingMode },
+                state.stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: state.facing },
                     audio: true
                 });
-                
-                el.localVideo.srcObject = state.localStream;
-                el.miniLocalVideo.srcObject = state.localStream;
-                
-                // Replace tracks in peer connection
+                el.localVideo.srcObject = state.stream;
                 if (state.pc) {
-                    const senders = state.pc.getSenders();
-                    const videoTrack = state.localStream.getVideoTracks()[0];
-                    const audioTrack = state.localStream.getAudioTracks()[0];
-                    
-                    senders.forEach(sender => {
-                        if (sender.track?.kind === 'video' && videoTrack) {
-                            sender.replaceTrack(videoTrack);
-                        } else if (sender.track?.kind === 'audio' && audioTrack) {
-                            sender.replaceTrack(audioTrack);
-                        }
-                    });
+                    const sender = state.pc.getSenders().find(s => s.track?.kind === 'video');
+                    if (sender) sender.replaceTrack(state.stream.getVideoTracks()[0]);
                 }
-            } catch (e) {
-                console.error('Flip camera error:', e);
-            }
+                vibrate();
+            } catch (e) { console.error('Flip error:', e); }
         }
         
-        // ============================================
+        // =============================================
         // WEBRTC
-        // ============================================
-        
+        // =============================================
         function createPC() {
             const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-            
-            state.localStream?.getTracks().forEach(t => pc.addTrack(t, state.localStream));
-            
-            pc.ontrack = (e) => {
+            state.stream?.getTracks().forEach(t => pc.addTrack(t, state.stream));
+            pc.ontrack = e => {
                 el.remoteVideo.srcObject = e.streams[0];
                 el.remotePlaceholder.style.display = 'none';
-                el.remoteBox.classList.add('connected');
             };
-            
-            pc.onicecandidate = (e) => {
-                if (e.candidate) {
-                    state.socket.emit('ice-candidate', { candidate: e.candidate });
-                }
+            pc.onicecandidate = e => {
+                if (e.candidate) state.socket.emit('ice-candidate', { candidate: e.candidate });
             };
-            
             pc.onconnectionstatechange = () => {
                 if (pc.connectionState === 'connected') {
                     toast('Verbunden!', 'success');
-                } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                    vibrate(100);
+                } else if (['disconnected', 'failed'].includes(pc.connectionState)) {
                     handlePartnerLeft();
                 }
             };
-            
             state.pc = pc;
             return pc;
         }
@@ -1292,25 +1393,18 @@
             state.socket.emit('webrtc-answer', { answer });
         }
         
-        async function handleAnswer(answer) {
-            await state.pc?.setRemoteDescription(answer);
-        }
-        
-        async function handleIce(candidate) {
-            await state.pc?.addIceCandidate(candidate);
-        }
+        async function handleAnswer(answer) { await state.pc?.setRemoteDescription(answer); }
+        async function handleIce(candidate) { await state.pc?.addIceCandidate(candidate); }
         
         function closePC() {
             state.pc?.close();
             state.pc = null;
             el.remoteVideo.srcObject = null;
-            el.remoteBox.classList.remove('connected');
         }
         
-        // ============================================
+        // =============================================
         // SOCKET
-        // ============================================
-        
+        // =============================================
         function initSocket() {
             state.socket = io();
             
@@ -1324,91 +1418,71 @@
                 toast('Verbindung verloren', 'error');
             });
             
-            state.socket.on('user-info', (u) => {
-                state.user = u;
-                el.localFlag.textContent = u.country.code;
-                el.localName.textContent = u.name;
-            });
-            
-            state.socket.on('stats', (s) => {
-                el.onlineCount.textContent = s.online;
-            });
+            state.socket.on('user-info', u => { state.user = u; });
+            state.socket.on('stats', s => { el.onlineCount.textContent = s.online; });
             
             state.socket.on('searching', () => {
                 state.searching = true;
-                el.searching.classList.add('active');
+                el.searchingOverlay.classList.add('active');
             });
             
-            state.socket.on('match-found', (data) => {
+            state.socket.on('match-found', data => {
                 state.searching = false;
                 state.inCall = true;
                 state.partner = data;
                 state.liked = false;
                 
-                el.searching.classList.remove('active');
-                el.matchInfo.textContent = `${data.partnerCountry.code} ${data.partnerName}`;
+                el.searchingOverlay.classList.remove('active');
+                el.matchName.textContent = `${data.partnerCountry.code} ${data.partnerName}`;
                 el.matchOverlay.classList.add('active');
+                vibrate(200);
                 
                 setTimeout(() => {
                     el.matchOverlay.classList.remove('active');
-                    el.remoteFlag.textContent = data.partnerCountry.code;
-                    el.remoteName.textContent = data.partnerName;
-                    el.remoteLabel.style.display = 'flex';
-                    
+                    el.partnerFlag.textContent = data.partnerCountry.code;
+                    el.partnerName.textContent = data.partnerName;
+                    el.partnerCountry.textContent = data.partnerCountry.name;
+                    el.partnerInfo.classList.add('active');
                     clearChat();
                     addMsg(`Verbunden mit ${data.partnerName}`, 'system');
                     enableChat(true);
                     updateUI(true);
-                    
                     createPC();
                     if (data.isInitiator) createOffer();
-                    
-                    // Show swipe hint on mobile
-                    if (window.innerWidth < 700) {
-                        el.swipeHint.classList.add('show');
-                        setTimeout(() => el.swipeHint.classList.remove('show'), 3000);
-                    }
                 }, 1200);
             });
             
             state.socket.on('partner-left', handlePartnerLeft);
-            
-            state.socket.on('ready-for-next', () => {
-                state.socket.emit('find-match', state.filter);
-            });
-            
-            state.socket.on('webrtc-offer', (d) => handleOffer(d.offer));
-            state.socket.on('webrtc-answer', (d) => handleAnswer(d.answer));
-            state.socket.on('ice-candidate', (d) => handleIce(d.candidate));
-            
-            state.socket.on('chat-message', (d) => addMsg(d.message, 'received'));
-            state.socket.on('partner-typing', () => {});
+            state.socket.on('ready-for-next', () => state.socket.emit('find-match', state.filter));
+            state.socket.on('webrtc-offer', d => handleOffer(d.offer));
+            state.socket.on('webrtc-answer', d => handleAnswer(d.answer));
+            state.socket.on('ice-candidate', d => handleIce(d.candidate));
+            state.socket.on('chat-message', d => addMsg(d.message, 'received'));
             
             state.socket.on('received-like', () => {
-                toast('❤️ Du hast ein Like bekommen!', 'success');
+                toast('❤️ Du hast ein Like!', 'success');
+                vibrate(100);
             });
             
-            state.socket.on('received-gift', (d) => {
-                showGiftAnimation(d.gift);
-                toast(`${d.gift} Geschenk von ${d.from}!`, 'success');
+            state.socket.on('received-gift', d => {
+                showGift(d.gift);
+                toast(`${d.gift} von ${d.from}!`);
+                vibrate(150);
             });
             
-            state.socket.on('friend-request', (d) => {
-                if (confirm(`${d.from} möchte dein Freund sein!`)) {
+            state.socket.on('friend-request', d => {
+                if (confirm(`${d.from} möchte Freund werden!`)) {
                     state.socket.emit('accept-friend', { fromId: d.fromId });
                     toast('Freund hinzugefügt!', 'success');
                 }
             });
-            
-            state.socket.on('friend-accepted', () => {
-                toast('Freundschaft bestätigt!', 'success');
-            });
         }
         
         function handlePartnerLeft() {
-            toast('Partner hat verlassen');
+            toast('Partner weg');
             resetCall();
-            addMsg('Partner hat den Chat verlassen', 'system');
+            addMsg('Partner hat verlassen', 'system');
+            vibrate(50);
         }
         
         function resetCall() {
@@ -1416,92 +1490,83 @@
             state.searching = false;
             state.partner = null;
             state.liked = false;
-            
             closePC();
-            
-            el.searching.classList.remove('active');
+            el.searchingOverlay.classList.remove('active');
             el.remotePlaceholder.style.display = 'flex';
-            el.remoteLabel.style.display = 'none';
+            el.partnerInfo.classList.remove('active');
             el.giftPicker.classList.remove('active');
             el.likeBtn.classList.remove('liked');
             el.likeBtn.innerHTML = '❤️ Like';
-            
             enableChat(false);
             updateUI(false);
         }
         
-        // ============================================
+        // =============================================
         // EVENTS
-        // ============================================
-        
+        // =============================================
         function init() {
-            // Start
             el.startBtn.onclick = async () => {
                 el.startScreen.classList.add('hidden');
-                if (await getMedia()) {
-                    initSocket();
-                }
+                if (await getMedia()) initSocket();
             };
             
-            // Settings
-            el.menuBtn.onclick = () => el.settingsPanel.classList.add('active');
-            el.settingsClose.onclick = () => el.settingsPanel.classList.remove('active');
+            el.settingsBtn.onclick = () => el.settingsModal.classList.add('active');
+            el.settingsClose.onclick = () => el.settingsModal.classList.remove('active');
             
-            document.querySelectorAll('[data-gender]').forEach(btn => {
+            document.querySelectorAll('#genderOptions .setting-opt').forEach(btn => {
                 btn.onclick = () => {
-                    document.querySelectorAll('[data-gender]').forEach(b => b.classList.remove('selected'));
+                    document.querySelectorAll('#genderOptions .setting-opt').forEach(b => b.classList.remove('selected'));
                     btn.classList.add('selected');
-                    state.gender = btn.dataset.gender || null;
+                    state.gender = btn.dataset.val;
                 };
             });
             
-            document.querySelectorAll('.filter-option').forEach(btn => {
+            document.querySelectorAll('#regionOptions .setting-opt').forEach(btn => {
                 btn.onclick = () => {
-                    document.querySelectorAll('.filter-option').forEach(b => b.classList.remove('selected'));
+                    document.querySelectorAll('#regionOptions .setting-opt').forEach(b => b.classList.remove('selected'));
                     btn.classList.add('selected');
-                    state.filter = btn.dataset.filter ? { region: btn.dataset.filter } : {};
+                    state.filter = btn.dataset.val ? { region: btn.dataset.val } : {};
                 };
             });
             
             el.settingsSave.onclick = () => {
                 state.socket?.emit('set-preferences', { gender: state.gender, filter: state.filter });
-                el.settingsPanel.classList.remove('active');
+                el.settingsModal.classList.remove('active');
                 toast('Gespeichert');
+                vibrate();
             };
             
-            // Controls
             el.micBtn.onclick = () => {
                 state.micOn = !state.micOn;
-                state.localStream?.getAudioTracks().forEach(t => t.enabled = state.micOn);
+                state.stream?.getAudioTracks().forEach(t => t.enabled = state.micOn);
                 el.micBtn.classList.toggle('muted', !state.micOn);
                 el.micBtn.textContent = state.micOn ? '🎤' : '🔇';
+                vibrate();
             };
             
             el.camBtn.onclick = () => {
                 state.camOn = !state.camOn;
-                state.localStream?.getVideoTracks().forEach(t => t.enabled = state.camOn);
+                state.stream?.getVideoTracks().forEach(t => t.enabled = state.camOn);
                 el.camBtn.classList.toggle('muted', !state.camOn);
                 el.camBtn.textContent = state.camOn ? '📹' : '📷';
+                vibrate();
             };
             
-            el.flipCamBtn.onclick = flipCamera;
+            el.flipBtn.onclick = flipCamera;
             
-            el.startCallBtn.onclick = () => {
+            el.startCall.onclick = () => {
                 if (!state.connected) return toast('Nicht verbunden', 'error');
                 state.socket.emit('find-match', state.filter);
+                vibrate();
             };
             
-            el.nextBtn.onclick = () => state.socket.emit('next-partner');
+            el.nextCall.onclick = () => { state.socket.emit('next-partner'); vibrate(); };
+            el.endCall.onclick = () => { state.socket.emit('end-call'); resetCall(); vibrate(); };
             
-            el.endBtn.onclick = () => {
-                state.socket.emit('end-call');
-                resetCall();
-            };
-            
-            el.cancelBtn.onclick = () => {
+            el.cancelSearch.onclick = () => {
                 state.socket.emit('cancel-search');
                 state.searching = false;
-                el.searching.classList.remove('active');
+                el.searchingOverlay.classList.remove('active');
             };
             
             el.reportBtn.onclick = () => {
@@ -1511,71 +1576,47 @@
                 }
             };
             
-            // Chat
             el.chatSend.onclick = sendMsg;
-            el.chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendMsg(); };
+            el.chatInput.onkeypress = e => { if (e.key === 'Enter') sendMsg(); };
             
-            el.quickReplies.querySelectorAll('.quick-reply').forEach(btn => {
-                btn.onclick = () => {
-                    if (state.inCall) {
-                        el.chatInput.value = btn.dataset.msg;
-                        sendMsg();
-                    }
-                };
-            });
-            
-            // Actions
             el.likeBtn.onclick = () => {
                 if (state.inCall && !state.liked) {
                     state.socket.emit('like-partner');
                     state.liked = true;
                     el.likeBtn.classList.add('liked');
-                    el.likeBtn.innerHTML = '❤️ Liked!';
+                    el.likeBtn.innerHTML = '❤️ Liked';
+                    vibrate(100);
                 }
             };
             
-            el.giftBtn.onclick = () => {
-                el.giftPicker.classList.toggle('active');
-            };
+            el.giftBtn.onclick = () => el.giftPicker.classList.toggle('active');
             
-            el.giftPicker.querySelectorAll('.gift-btn').forEach(btn => {
+            document.querySelectorAll('.gift-item').forEach(btn => {
                 btn.onclick = () => {
                     if (state.inCall) {
                         state.socket.emit('send-gift', { gift: btn.dataset.gift });
                         el.giftPicker.classList.remove('active');
+                        vibrate();
                     }
                 };
             });
             
-            el.addFriendBtn.onclick = () => {
+            el.friendBtn.onclick = () => {
                 if (state.inCall) {
                     state.socket.emit('add-friend');
-                    toast('Freundschaftsanfrage gesendet');
+                    toast('Anfrage gesendet');
                 }
             };
             
-            // Swipe gesture for next
-            let touchStartY = 0;
-            el.remoteBox.addEventListener('touchstart', (e) => {
-                touchStartY = e.touches[0].clientY;
+            // Swipe for next
+            let touchY = 0;
+            document.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
+            document.addEventListener('touchend', e => {
+                const diff = touchY - e.changedTouches[0].clientY;
+                if (diff > 100 && state.inCall) { state.socket.emit('next-partner'); vibrate(); }
             }, { passive: true });
             
-            el.remoteBox.addEventListener('touchend', (e) => {
-                const diff = touchStartY - e.changedTouches[0].clientY;
-                if (diff > 100 && state.inCall) {
-                    state.socket.emit('next-partner');
-                }
-            }, { passive: true });
-            
-            // Keyboard
-            document.onkeydown = (e) => {
-                if (e.key === 'Escape' && state.inCall) {
-                    state.socket.emit('next-partner');
-                }
-            };
-            
-            // Close gift picker on outside click
-            document.onclick = (e) => {
+            document.onclick = e => {
                 if (!el.giftPicker.contains(e.target) && e.target !== el.giftBtn) {
                     el.giftPicker.classList.remove('active');
                 }

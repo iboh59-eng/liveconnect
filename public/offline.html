@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>LiveConnect - Offline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #ff2d55, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        p {
+            color: #8a8a9a;
+            font-size: 16px;
+            line-height: 1.5;
+            max-width: 300px;
+            margin-bottom: 32px;
+        }
+        
+        button {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #ff2d55, #ff6b35);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .status {
+            position: fixed;
+            bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #1c1c26;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #8a8a9a;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff453a;
+            border-radius: 50%;
+        }
+        
+        .status.online .status-dot {
+            background: #30d158;
+        }
+    </style>
+</head>
+<body>
+    <div class="icon">📡</div>
+    <h1>Du bist offline</h1>
+    <p>LiveConnect benötigt eine Internetverbindung für Video-Chats. Bitte prüfe deine Verbindung.</p>
+    <button onclick="location.reload()">Erneut versuchen</button>
+    
+    <div class="status" id="status">
+        <div class="status-dot"></div>
+        <span>Keine Verbindung</span>
+    </div>
+    
+    <script>
+        // Check online status
+        function updateStatus() {
+            const status = document.getElementById('status');
+            if (navigator.onLine) {
+                status.classList.add('online');
+                status.querySelector('span').textContent = 'Verbunden';
+                // Redirect to main page when back online
+                setTimeout(() => location.href = '/', 1000);
+            } else {
+                status.classList.remove('online');
+                status.querySelector('span').textContent = 'Keine Verbindung';
+            }
+        }
+        
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+        updateStatus();
+    </script>
+</body>
+</html>

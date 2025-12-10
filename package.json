@@ -1,16 +1,20 @@
 {
-  "name": "liveconnect",
+  "name": "liveconnect-pwa",
   "version": "2.0.0",
-  "description": "Full-featured Azar-style random video chat",
+  "description": "LiveConnect - Random Video Chat PWA",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "generate-icons": "node generate-icons.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2"
   },
+  "devDependencies": {
+    "sharp": "^0.33.2"
+  },
   "engines": {
-    "node": "18.x"
+    "node": ">=18.0.0"
   }
 }
